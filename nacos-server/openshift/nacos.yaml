@@ -1,0 +1,222 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: nacos-server
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nacos-service
+  labels:
+    app: nacos-server
+  annotations:
+    service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
+spec:
+  ports:
+    - port: 8848
+      name: server
+      targetPort: 8848
+    - port: 7848
+      name: rpc
+      targetPort: 7848
+  clusterIP: None
+  selector:
+    app: nacos-server
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nacos-server
+  labels:
+    app: nacos-server
+  annotations:
+    service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
+spec:
+  ports:
+    - port: 8848
+      name: server
+      targetPort: 8848
+    - port: 7848
+      name: rpc
+      targetPort: 7848
+  selector:
+    app: nacos-server
+---
+apiVersion: v1
+kind: Route
+metadata:
+  labels:
+    app: nacos-server
+  name: nacos-server
+spec:
+  port:
+    targetPort: 8848
+  to:
+    kind: Service
+    name: nacos-server
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nacos-cm
+data:
+  mysql.db.host: "nacos-mysql"
+  mysql.db.port: "3306"
+  mysql.db.name: "nacos_devtest"
+  mysql.db.user: "nacos"
+  mysql.db.password: "nacos"
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: nacos-server
+spec:
+  serviceName: nacos-service
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: nacos-server
+      annotations:
+        pod.alpha.kubernetes.io/initialized: "true"
+    spec:
+      securityContext:
+        fsGroup: 502
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: "app"
+                    operator: In
+                    values:
+                      - nacos
+              topologyKey: "kubernetes.io/hostname"
+      serviceAccountName: nacos-server
+      initContainers:
+        - name: peer-finder-plugin-install
+          image: nacos/nacos-peer-finder-plugin:1.0
+          imagePullPolicy: Always
+          volumeMounts:
+            - mountPath: "/home/nacos/plugins/peer-finder"
+              name: plugindir
+      containers:
+        - name: nacos-server
+          imagePullPolicy: Always
+          image: nacos/nacos-server:2.0.0
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "200m"
+          ports:
+            - containerPort: 8848
+              name: client-port
+            - containerPort: 7848
+              name: rpc
+          env:
+            - name: NACOS_REPLICAS
+              value: "3"
+            - name: SERVICE_NAME
+              value: "nacos-service"
+            - name: DOMAIN_NAME
+              value: "cluster.local"
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.namespace
+            - name: MYSQL_SERVICE_DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: nacos-cm
+                  key: mysql.db.name
+            - name: MYSQL_SERVICE_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: nacos-cm
+                  key: mysql.db.host
+            - name: MYSQL_SERVICE_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: nacos-cm
+                  key: mysql.db.port
+            - name: MYSQL_SERVICE_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: nacos-cm
+                  key: mysql.db.user
+            - name: MYSQL_SERVICE_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: nacos-cm
+                  key: mysql.db.password
+            - name: NACOS_SERVER_PORT
+              value: "8848"
+            - name: NACOS_APPLICATION_PORT
+              value: "8848"
+            - name: PREFER_HOST_MODE
+              value: "hostname"
+          volumeMounts:
+            - name: plugindir
+              mountPath: /home/nacos/plugins/peer-finder
+            - name: datadir
+              mountPath: /home/nacos/data
+            - name: logdir
+              mountPath: /home/nacos/logs
+  volumeClaimTemplates:
+    - metadata:
+        name: plugindir
+      spec:
+        accessModes: [ "ReadWriteMany" ]
+        resources:
+          requests:
+            storage: 5Gi
+    - metadata:
+        name: datadir
+      spec:
+        accessModes: [ "ReadWriteMany" ]
+        resources:
+          requests:
+            storage: 5Gi
+    - metadata:
+        name: logdir
+      spec:
+        accessModes: [ "ReadWriteMany" ]
+        resources:
+          requests:
+            storage: 5Gi
+  selector:
+    matchLabels:
+      app: nacos-server
+---
+  allowHostDirVolumePlugin: true
+  allowHostIPC: false
+  allowHostNetwork: false
+  allowHostPID: false
+  allowHostPorts: false
+  allowPrivilegeEscalation: true
+  allowPrivilegedContainer: true
+  allowedCapabilities: null
+  apiVersion: security.openshift.io/v1
+  defaultAddCapabilities: null
+  fsGroup:
+    type: RunAsAny
+  groups: []
+  kind: SecurityContextConstraints
+  metadata:
+    name: nacos-server
+  priority: null
+  readOnlyRootFilesystem: false
+  requiredDropCapabilities: null
+  runAsUser:
+    type: RunAsAny
+  seLinuxContext:
+    type: RunAsAny
+  supplementalGroups:
+    type: RunAsAny
+  users:
+  - system:serviceaccount:spring-cloud-alibaba:nacos-server
+  volumes:
+  - '*'

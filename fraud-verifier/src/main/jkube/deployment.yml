@@ -1,0 +1,23 @@
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - env:
+            - name: JAVA_OPTIONS
+              value: "-Dspring.profiles.active=openshift -Dnacos.server.address=nacos-service"
+            - name: AB_JOLOKIA_OFF
+              value: "true"
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: HOSTNAME
+              value: "fraud-verifier"
+          readinessProbe:  
+            tcpSocket:
+              port: 20881
+          livenessProbe:
+            tcpSocket:
+              port: 20881
+              
