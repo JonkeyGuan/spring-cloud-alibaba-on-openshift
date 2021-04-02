@@ -5,7 +5,7 @@ spec:
       containers:
         - env:
             - name: JAVA_OPTIONS
-              value: "-Dspring.profiles.active=openshift -Dnacos.server.address=nacos-service"
+              value: "-Dspring.profiles.active=openshift -Dnacos.server.address=nacos-service -Dsentinel.dashboard.address=sentinel-dashboard"
             - name: AB_JOLOKIA_OFF
               value: "true"
             - name: POD_NAME

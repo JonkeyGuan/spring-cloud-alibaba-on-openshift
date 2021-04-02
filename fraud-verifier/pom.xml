@@ -44,9 +44,19 @@
 
 		<dependency>
 			<groupId>com.alibaba.cloud</groupId>
+			<artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.alibaba.cloud</groupId>
 			<artifactId>spring-cloud-starter-dubbo</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>com.alibaba.csp</groupId>
+			<artifactId>sentinel-dubbo-adapter</artifactId>
+		</dependency>
+		
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>

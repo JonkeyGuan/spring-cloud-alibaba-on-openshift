@@ -3,12 +3,14 @@ package com.demo.fraudverifier.card;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+import com.alibaba.csp.sentinel.annotation.SentinelResource;
 import com.demo.fraudverifier.VerificationResult;
 
 import org.apache.dubbo.config.annotation.DubboService;
 
 
 @DubboService
+@SentinelResource
 public class DefaultCardApplicationVerificationService implements CardApplicationVerificationService{
 
 	private static final BigDecimal LIMIT = new BigDecimal("9000");

@@ -14,6 +14,10 @@ spring:
         server-addr: localhost:8848
       config:
         server-addr: localhost:8848
+    sentinel:
+      eager: true
+      transport:
+        dashboard: localhost:8858
 
 dubbo:
   protocol:
@@ -32,3 +36,6 @@ spring:
         server-addr: ${nacos.server.address}:8848
       config:
         server-addr: ${nacos.server.address}:8848
+    sentinel:
+      transport:
+        dashboard: ${sentinel.dashboard.address}:8858

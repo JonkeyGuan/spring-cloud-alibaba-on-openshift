@@ -1,0 +1,112 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sentinel-dashboard
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sentinel-dashboard
+  labels:
+    app: sentinel-dashboard
+  annotations:
+    service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
+spec:
+  ports:
+    - port: 8858
+      name: server
+      targetPort: 8858
+  selector:
+    app: sentinel-dashboard
+---
+apiVersion: v1
+kind: Route
+metadata:
+  labels:
+    app: sentinel-dashboard
+  name: sentinel-dashboard
+spec:
+  port:
+    targetPort: 8858
+  to:
+    kind: Service
+    name: sentinel-dashboard
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: sentinel-dashboard
+spec:
+  serviceName: sentinel-dashboard
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: sentinel-dashboard
+      annotations:
+        pod.alpha.kubernetes.io/initialized: "true"
+    spec:
+      securityContext:
+        runAsUser: 0
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: "app"
+                    operator: In
+                    values:
+                      - sentinel-dashboard
+              topologyKey: "kubernetes.io/hostname"
+      serviceAccountName: sentinel-dashboard
+      containers:
+        - name: sentinel-dashboard
+          imagePullPolicy: Always
+          image: bladex/sentinel-dashboard:1.8.0
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+          ports:
+            - containerPort: 8858
+              name: client
+          env:
+            - name: TZ
+              value: Asia/Shanghai
+            - name: JAVA_OPTS
+              value: -Dserver.port=8858 -Dcsp.sentinel.dashboard.server=127.0.0.1:8858 -Dsentinel.dashboard.auth.username=sentinel -Dsentinel.dashboard.auth.password=sentinel -Dserver.servlet.session.timeout=7200
+  selector:
+    matchLabels:
+      app: sentinel-dashboard
+
+---
+  allowHostDirVolumePlugin: true
+  allowHostIPC: false
+  allowHostNetwork: false
+  allowHostPID: false
+  allowHostPorts: false
+  allowPrivilegeEscalation: true
+  allowPrivilegedContainer: true
+  allowedCapabilities: null
+  apiVersion: security.openshift.io/v1
+  defaultAddCapabilities: null
+  fsGroup:
+    type: RunAsAny
+  groups: []
+  kind: SecurityContextConstraints
+  metadata:
+    name: nacos-server
+  priority: null
+  readOnlyRootFilesystem: false
+  requiredDropCapabilities: null
+  runAsUser:
+    type: RunAsAny
+  seLinuxContext:
+    type: RunAsAny
+  supplementalGroups:
+    type: RunAsAny
+  users:
+  - system:serviceaccount:spring-cloud-alibaba:sentinel-dashboard
+  volumes:
+  - '*'
