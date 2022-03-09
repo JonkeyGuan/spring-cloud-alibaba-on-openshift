@@ -50,6 +50,7 @@ metadata:
     app: nacos-server
   name: nacos-server
 spec:
+  path: /nacos
   port:
     targetPort: 8848
   to:
@@ -217,6 +218,6 @@ spec:
   supplementalGroups:
     type: RunAsAny
   users:
-  - system:serviceaccount:dubbo:nacos-server
+  - system:serviceaccount:spring-cloud-alibaba:nacos-server
   volumes:
   - '*'
