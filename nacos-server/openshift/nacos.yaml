@@ -50,7 +50,6 @@ metadata:
     app: nacos-server
   name: nacos-server
 spec:
-  path: /nacos
   port:
     targetPort: 8848
   to:
@@ -170,21 +169,21 @@ spec:
     - metadata:
         name: plugindir
       spec:
-        accessModes: [ "ReadWriteMany" ]
+        accessModes: [ "ReadWriteOnce" ]
         resources:
           requests:
             storage: 5Gi
     - metadata:
         name: datadir
       spec:
-        accessModes: [ "ReadWriteMany" ]
+        accessModes: [ "ReadWriteOnce" ]
         resources:
           requests:
             storage: 5Gi
     - metadata:
         name: logdir
       spec:
-        accessModes: [ "ReadWriteMany" ]
+        accessModes: [ "ReadWriteOnce" ]
         resources:
           requests:
             storage: 5Gi
@@ -218,6 +217,6 @@ spec:
   supplementalGroups:
     type: RunAsAny
   users:
-  - system:serviceaccount:spring-cloud-alibaba:nacos-server
+  - system:serviceaccount:dubbo:nacos-server
   volumes:
   - '*'

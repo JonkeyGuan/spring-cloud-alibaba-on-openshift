@@ -83,6 +83,7 @@ items:
           volumeMounts:
           - name: mysql-data
             mountPath: /var/lib/mysql
+            subPath: mount
           terminationMessagePath: "/dev/termination-log"
           imagePullPolicy: IfNotPresent
           capabilities: {}
